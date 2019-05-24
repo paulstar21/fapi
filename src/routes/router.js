@@ -32,7 +32,11 @@ function evaluateTemplate(template) {
    * @param {express.NextFunction} next
    */
   const fn = function(req, res, next) {
-    req.matched = true;
+    if (req.matched === false) {
+      next();
+      return;
+    }
+
     req.template = {
       req: evaluate(template.req, { template, req }),
       res: evaluate(template.res, { template, req })
@@ -147,6 +151,10 @@ function defaultReqHandler(requestDefaults) {
         res.send(evalReq.body401);
         return;
       }
+
+      req.matched = Object.keys(evalReq.headers).every(header => {
+        return isEqual(evalReq.headers[header], req.get(header));
+      });
     }
 
     next();
