@@ -2,6 +2,8 @@ import express from "express";
 import _ from "lodash";
 import { leftPropMatcher, allPropMatcher } from "./propMatchers";
 import { invoke } from "../utils";
+import swaggerUi from "swagger-ui-express";
+import pathToRegexp from "path-to-regexp";
 
 function initialize(templates) {
   const templateDefaults = {
@@ -63,6 +65,58 @@ function buildRouter(templates) {
   return router;
 }
 
+export function swagger(templates, rootPath) {
+  const initializedTemplates = initialize(templates);
+
+  const swaggerSpec = {
+    swagger: "2.0",
+    info: {
+      title: "Blah",
+      description: "",
+      version: "1.0"
+    },
+    produces: ["application/json"],
+    paths: {}
+  };
+  let paths = {};
+
+  Object.keys(initializedTemplates).forEach(key => {
+    templates = initializedTemplates[key];
+
+    templates.forEach(template => {
+      let path = `${rootPath || ""}/${key}${template.req.path}`;
+      const pathObj = paths[path] || {};
+
+      const pathKeys = [];
+      const parameters = [];
+      let pathRegex = pathToRegexp(template.req.path, pathKeys);
+      if (pathKeys.length > 0) {
+        pathKeys.forEach(key => {
+          let r = new RegExp(`:${key.name}(\\(.+\\))?`);
+          path = path.replace(r, `{${key.name}}`);
+          parameters.push({
+            in: "path",
+            name: key.name
+          });
+        });
+      }
+
+      pathObj[template.req.method] = {
+        tags: [path],
+        description: "",
+        parameters,
+        responses: {}
+      };
+      paths[path] = pathObj;
+    });
+    swaggerSpec["paths"] = paths;
+  });
+  const router = express.Router();
+  router.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  return router;
+}
+
 export default function(templates) {
-  return buildRouter(initialize(templates));
+  const initializedRoutes = initialize(templates);
+  return buildRouter(initializedRoutes);
 }
