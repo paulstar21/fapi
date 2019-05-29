@@ -2,11 +2,35 @@ import express from "express";
 import swaggerUi from "swagger-ui-express";
 import pathToRegexp from "path-to-regexp";
 import { initializeTemplates } from "./router";
+import _ from "lodash";
 
 function extractParamsFromPath(path) {
   const pathKeys = [];
   let pathRegex = pathToRegexp(path, pathKeys);
   return pathKeys;
+}
+
+function groupTemplateByPath(templates, resourcePath) {
+  return templates.reduce((templateGroup, template) => {
+    const swaggerPath = template.req.path.replace(
+      /(?::([a-zA-Z]+))(:?\(.+\))?/,
+      "{$1}"
+    );
+    const path = `/${resourcePath}${swaggerPath}`;
+
+    if (!templateGroup[path]) {
+      templateGroup[path] = {};
+    }
+
+    let httpMethodGroup = templateGroup[path][template.req.method];
+
+    templateGroup[path][template.req.method] = _.merge(
+      {},
+      httpMethodGroup,
+      template
+    );
+    return templateGroup;
+  }, {});
 }
 
 export default function(templates, rootPath) {
@@ -22,49 +46,51 @@ export default function(templates, rootPath) {
     produces: ["application/json"]
   };
 
-  let paths = Object.keys(initializedTemplates).reduce((paths, key) => {
-    templates = initializedTemplates[key];
+  let paths = Object.keys(initializedTemplates).reduce(
+    (paths, resourcePath) => {
+      const groupedByPathTemplate = groupTemplateByPath(
+        initializedTemplates[resourcePath],
+        resourcePath
+      );
 
-    templates.forEach(template => {
-      const pathParams = extractParamsFromPath(template.req.path);
+      Object.keys(groupedByPathTemplate).forEach(path => {
+        const swaggerPath = `${rootPath || ""}${path}`;
+        const templateByPath = groupedByPathTemplate[path];
 
-      const path = pathParams.reduce((newPath, param) => {
-        let paramRegex = new RegExp(`:${param.name}(\\(.+\\))?`);
-        return newPath.replace(paramRegex, `{${param.name}}`);
-      }, template.req.path);
+        Object.keys(groupedByPathTemplate[path]).forEach(method => {
+          const template = templateByPath[method];
+          const swaggerQueryParams = template.req.query
+            ? Object.keys(template.req.query).map(key => {
+                return {
+                  in: "query",
+                  name: key
+                };
+              })
+            : [];
 
-      let swaggerPath = `${rootPath || ""}/${key}${path}`;
+          const pathParams = extractParamsFromPath(template.req.path);
+          const swaggerPathParams = pathParams.map(key => {
+            return {
+              in: "path",
+              name: key.name
+            };
+          });
 
-      const swaggerPathParams = pathParams.map(key => {
-        let paramRegex = new RegExp(`:${key.name}(\\(.+\\))?`);
-        swaggerPath = swaggerPath.replace(paramRegex, `{${key.name}}`);
-        return {
-          in: "path",
-          name: key.name
-        };
+          const pathObj = paths[swaggerPath] || {};
+          pathObj[method] = {
+            tags: [swaggerPath],
+            description: "",
+            parameters: [...swaggerQueryParams, ...swaggerPathParams],
+            responses: {}
+          };
+          paths[swaggerPath] = pathObj;
+        });
       });
 
-      const swaggerQueryParams = template.req.query
-        ? Object.keys(template.req.query).map(key => {
-            return {
-              in: "query",
-              name: key
-            };
-          })
-        : [];
-
-      const pathObj = paths[swaggerPath] || {};
-      pathObj[template.req.method] = {
-        tags: [swaggerPath],
-        description: "",
-        parameters: [...swaggerPathParams, ...swaggerQueryParams],
-        responses: {}
-      };
-      paths[swaggerPath] = pathObj;
-    });
-
-    return paths;
-  }, {});
+      return paths;
+    },
+    {}
+  );
 
   swaggerSpec["paths"] = paths;
 
