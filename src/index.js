@@ -1,5 +1,6 @@
 import express from "express";
-import router, { swagger } from "./router";
+import router from "./router";
+import { swagger } from "./router";
 import defaults from "./router/defaults";
 
 const server = templates => {
