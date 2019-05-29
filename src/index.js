@@ -1,6 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
-import router from "./routes/router";
+import router from "./router";
+import defaults from "./router/defaults";
 
 export default function(templates) {
   const app = express();
@@ -8,8 +9,6 @@ export default function(templates) {
   if (templates) {
     app.use("/api", router(templates));
   }
-
-  app.use(bodyParser.json());
   return app;
 }
 
