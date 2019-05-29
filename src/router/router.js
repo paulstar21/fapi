@@ -4,19 +4,20 @@ import { leftPropMatcher, allPropMatcher } from "./propMatchers";
 import { invoke } from "../utils";
 
 function initialize(templates) {
-  return Object.keys(templates).reduce((t, key) => {
+  const templateDefaults = {
+    req: { method: "get", path: "/" },
+    res: { body: null, status: 200 }
+  };
+
+  return Object.keys(templates).reduce((initializedTemplates, key) => {
     const templateCollection = templates[key];
     if (!(templateCollection instanceof Array))
       throw `${key} expected to be an array.`;
 
-    t[key] = templates[key].map(template => {
-      return _.merge(
-        {},
-        { req: { method: "get", path: "/" }, res: { body: null, status: 200 } },
-        invoke(template)
-      );
+    initializedTemplates[key] = templates[key].map(template => {
+      return _.merge({}, templateDefaults, invoke(template));
     });
-    return t;
+    return initializedTemplates;
   }, {});
 }
 
