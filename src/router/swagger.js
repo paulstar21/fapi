@@ -59,6 +59,7 @@ export default function(templates, rootPath) {
 
         Object.keys(groupedByPathTemplate[path]).forEach(method => {
           const template = templateByPath[method];
+
           const swaggerQueryParams = template.req.query
             ? Object.keys(template.req.query).map(key => {
                 return {
@@ -76,12 +77,25 @@ export default function(templates, rootPath) {
             };
           });
 
+          const bodyParams =
+            template.req.method === "post"
+              ? [{ in: "body", name: "body" }]
+              : [];
+
+          const swaggerResponses = {};
+          if (_.isNumber(template.res.status))
+            swaggerResponses[template.res.status] = { description: "" };
+
           const pathObj = paths[swaggerPath] || {};
           pathObj[method] = {
             tags: [swaggerPath],
             description: "",
-            parameters: [...swaggerQueryParams, ...swaggerPathParams],
-            responses: {}
+            parameters: [
+              ...swaggerQueryParams,
+              ...swaggerPathParams,
+              ...bodyParams
+            ],
+            responses: swaggerResponses
           };
           paths[swaggerPath] = pathObj;
         });
