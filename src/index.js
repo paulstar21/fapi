@@ -4,11 +4,11 @@ import { swagger } from "./router";
 import defaults from "./router/defaults";
 import _ from "lodash";
 
-const server = templates => {
+const defaultOptions = {
   enableSwagger: true
 };
 
-export default function(templates, options) {
+const server = (templates, options) => {
   const ops = _.merge({}, defaultOptions, options);
   const app = express();
   app.use(defaults());
