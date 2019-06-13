@@ -33,15 +33,15 @@ function groupTemplateByPath(templates, resourcePath) {
   }, {});
 }
 
-export default function(templates, rootPath) {
+export default function(templates, options) {
   const initializedTemplates = initializeTemplates(templates);
 
   const swaggerSpec = {
     swagger: "2.0",
     info: {
-      title: "fapi",
-      description: "",
-      version: "1.0"
+      title: options.swagger.title,
+      description: options.swagger.description,
+      version: options.swagger.version
     },
     produces: ["application/json"]
   };
@@ -54,7 +54,7 @@ export default function(templates, rootPath) {
       );
 
       Object.keys(groupedByPathTemplate).forEach(path => {
-        const swaggerPath = `${rootPath || ""}${path}`;
+        const swaggerPath = `${options.path || ""}${path}`;
         const templateByPath = groupedByPathTemplate[path];
 
         Object.keys(groupedByPathTemplate[path]).forEach(method => {

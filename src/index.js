@@ -5,18 +5,26 @@ import defaults from "./router/defaults";
 import _ from "lodash";
 
 const defaultOptions = {
-  enableSwagger: true
+  path: "/api",
+  swagger: {    
+    enabled: true,
+    title: "fapi",
+    description: "",
+    version: "1.0",
+    path: "/api-docs"
+  }
 };
 
 const server = (templates, options) => {
   const ops = _.merge({}, defaultOptions, options);
+  console.log(ops);
   const app = express();
   app.use(defaults());
 
   if (templates) {
-    app.use("/api", router(templates));
-    if (ops.enableSwagger) {
-      app.use("/api-docs", swagger(templates, "/api"));
+    app.use(ops.path, router(templates));
+    if (ops.swagger.enabled) {
+      app.use(ops.swagger.path, swagger(templates, ops));
     }
   }
   return app;
