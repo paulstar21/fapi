@@ -1,18 +1,18 @@
-import server, { router } from "../src";
+import server from "../src";
 
 let templates = {
-  customers: {
-    templates: [
-      {
-        req: { query: { name: /a.*/ } },
-        res: [{ id: 1, name: "Aaron" }, { id: 2, name: "Adrian" }]
-      },
-      { req: { query: { name: /.*/ } }, res: { body: [] } }
-    ]
-  }
+  ping: [
+    {
+      res: { body: "pong" }
+    }
+  ]
 };
 
-const app = server(templates);
+const app = server(templates, {
+  swagger: {
+    title: "test api"
+  }
+});
 app.listen(3000, () => {
   console.log("Running on port 3000.");
 });

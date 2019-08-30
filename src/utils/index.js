@@ -1,5 +1,4 @@
-import isEqual from "./isEqual";
-import evaluate from "./evaluate";
-import typechecking from "./typechecking";
+import invoke from "./invoke";
+import isEqualCustomizer from "./isEqualCustomizer";
 
-export { isEqual, evaluate, typechecking };
+export { invoke, isEqualCustomizer };
