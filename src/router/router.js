@@ -1,6 +1,6 @@
 import express from "express";
 import _ from "lodash";
-import { leftPropMatcher, allPropMatcher } from "./propMatchers";
+import { headerPropMatcher, allPropMatcher } from "./propMatchers";
 import { invoke } from "../utils";
 
 export function initializeTemplates(templates) {
@@ -31,7 +31,7 @@ function routeBuilder(router) {
       const reqTemplate = invoke(template.req, { req });
 
       const matchers = [
-        leftPropMatcher(reqTemplate.headers, req.headers),
+        headerPropMatcher(reqTemplate.headers, req.headers),
         allPropMatcher(reqTemplate.query, req.query),
         allPropMatcher(reqTemplate.body, req.body)
       ];
@@ -63,7 +63,7 @@ function buildRouter(templates) {
   return router;
 }
 
-export default function(templates) {
+export default function (templates) {
   const initializedTemplates = initializeTemplates(templates);
   return buildRouter(initializedTemplates);
 }
