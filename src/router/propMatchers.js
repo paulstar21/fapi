@@ -24,14 +24,14 @@ export function leftPropMatcher(value, other) {
 
 
 //for header values we are looping through the header keys so only need a simple string comparison
-//http headers are case insentive so make sure key comparison is lowercase
+//http header keys are all lowercase in express.js request
 //http header values still checked for case sensitivity
 export function headerPropMatcher(value, other) {
   return () => {
     if (typeof value === "undefined") return true;
 
     return Object.keys(value).every(key => {
-      return value[key.toLowerCase()] === other[key.toLowerCase()];
+      return value[key] === other[key.toLowerCase()];
     });
   };
 }
